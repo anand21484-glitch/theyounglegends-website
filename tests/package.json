@@ -1,0 +1,11 @@
+{
+  "name": "theyounglegends-website-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"js/**/*.test.mjs\""
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.0"
+  }
+}
