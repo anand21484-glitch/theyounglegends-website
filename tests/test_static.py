@@ -225,6 +225,52 @@ def test_parents_page_links_both_app_privacy_policies(docs):
     assert PRIVACY_URL in hrefs and PRIVACY_CM in hrefs
 
 
+# ---- Website copy must match what the apps really do (Play Store listings, Nov 2026)
+
+SITE_TEXT_FILES = ALL_HTML + ["scripts/legal-data.js"]
+
+
+@pytest.mark.parametrize("rel", SITE_TEXT_FILES)
+def test_no_curiosity_score_feature(rel):
+    """Neither app has a 'Curiosity Score'; Curious Minds uses XP points, badges and a Scoreboard."""
+    assert not re.search(r"Curiosity (Score|\+)", read(rel)), f"{rel}: mentions a Curiosity Score"
+
+
+@pytest.mark.parametrize("rel", SITE_TEXT_FILES)
+def test_no_friend_challenges_claim(rel):
+    """Neither app has friend challenges."""
+    assert not re.search(r"(?i)friend challenge", read(rel)), f"{rel}: mentions friend challenges"
+
+
+@pytest.mark.parametrize("rel", ["parents/index.html", "index.html"])
+def test_offline_copy_includes_curious_minds(rel):
+    """Curious Minds is 100% offline, so offline answers must not mention only Azadi Tales."""
+    for m in re.finditer(r"(?is)<details><summary>Do the apps work offline\?.*?</details>", read(rel)):
+        assert "Curious Minds" in m.group(0), f"{rel}: offline FAQ must mention Curious Minds"
+    if rel == "parents/index.html":
+        card = re.search(r"(?is)<h4>[^<]*[Oo]ffline[^<]*</h4><p>.*?</p>", read(rel)).group(0)
+        assert "Curious Minds" in card and "where supported" not in card
+
+
+@pytest.mark.parametrize("rel", SITE_TEXT_FILES)
+def test_both_apps_fully_offline_no_ask_the_hero(rel):
+    """Live Azadi Tales has no 'Ask the Hero' (internet) feature, so both apps are fully offline."""
+    html = read(rel)
+    assert not re.search(r"(?i)ask the hero", html), f"{rel}: mentions Ask the Hero"
+    assert "stories, quizzes and puzzles work" not in html, f"{rel}: Azadi Tales offline claim is still qualified"
+
+
+def test_azadi_page_states_it_is_completely_offline():
+    faq = re.search(r"(?is)<summary>Does it need an internet connection\?.*?</details>", read("azadi-tales/index.html")).group(0)
+    assert "No." in faq and "completely offline" in faq
+
+
+def test_curious_minds_page_shows_real_features():
+    html = read("curious-minds/index.html")
+    assert "XP" in html and "badge" in html.lower()
+    assert re.search(r"(?i)100% offline|fully offline", html)
+
+
 def test_curious_minds_age_range_matches_play_listing():
     """Play Store listing says ages 5 to 14."""
     assert not re.search(r"5(&ndash;|–|-)15", read("curious-minds/index.html")), \
