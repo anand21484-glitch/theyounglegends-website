@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DOMAIN = "theyounglegends.co.in"
 PLAY_AZADI = "https://play.google.com/store/apps/details?id=com.anand.theyounglegends"
 PLAY_CM = "https://play.google.com/store/apps/details?id=com.theyounglegends.curiousminds"
+PRIVACY_CM = "https://anand21484-glitch.github.io/Curious-Minds/doc/curious-minds-privacy-policy.html"
 PRIVACY_URL = "https://sites.google.com/view/azadi-tales-privacy"
 FORM_ENDPOINT = "https://formsubmit.co"
 
@@ -37,7 +38,7 @@ ALL_HTML = list(PAGES.values()) + ["404.html"]
 
 # Only these external sites may be linked to. Add new ones deliberately.
 ALLOWED_EXTERNAL_HOSTS = {
-    "play.google.com", "sites.google.com", "www.instagram.com",
+    "play.google.com", "anand21484-glitch.github.io", "sites.google.com", "www.instagram.com",
     "www.youtube.com", DOMAIN,
 }
 
@@ -196,7 +197,8 @@ def test_store_and_privacy_links(docs):
     assert home.find("a", href=PLAY_AZADI), "Google Play button must open Azadi Tales"
     for rel in PAGES.values():
         hrefs = [a.get("href", "") for t, a in docs[rel].tags if t == "a"]
-        assert PRIVACY_URL in hrefs or rel == "404.html", f"{rel}: privacy link missing"
+        policy = PRIVACY_CM if rel == "curious-minds/index.html" else PRIVACY_URL  # each app page links its own policy
+        assert policy in hrefs, f"{rel}: privacy link missing"
 
 
 def test_curious_minds_is_live_on_google_play(docs):
@@ -209,6 +211,18 @@ def test_curious_minds_is_live_on_google_play(docs):
         assert "Coming soon to" not in read(rel), f"{rel}: still says Curious Minds is coming soon"
     home_cm_card = re.search(r"Curious Minds · Science.*?</div></div>", read("index.html"), re.S).group(0)
     assert "Available on Google Play" in home_cm_card, "home page app card should say it's on Google Play"
+
+
+@pytest.mark.parametrize("rel", ["curious-minds/index.html", "parents/index.html"])
+def test_curious_minds_privacy_policy_linked(docs, rel):
+    links = docs[rel].find("a", href=PRIVACY_CM)
+    assert links, f"{rel}: link to the Curious Minds privacy policy missing"
+    assert all("noopener" in a.get("rel", "") and a.get("target") == "_blank" for a in links)
+
+
+def test_parents_page_links_both_app_privacy_policies(docs):
+    hrefs = [a.get("href") for t, a in docs["parents/index.html"].tags if t == "a"]
+    assert PRIVACY_URL in hrefs and PRIVACY_CM in hrefs
 
 
 def test_curious_minds_age_range_matches_play_listing():
