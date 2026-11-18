@@ -17,6 +17,7 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 DOMAIN = "theyounglegends.co.in"
 PLAY_AZADI = "https://play.google.com/store/apps/details?id=com.anand.theyounglegends"
+PLAY_CM = "https://play.google.com/store/apps/details?id=com.theyounglegends.curiousminds"
 PRIVACY_URL = "https://sites.google.com/view/azadi-tales-privacy"
 FORM_ENDPOINT = "https://formsubmit.co"
 
@@ -196,6 +197,27 @@ def test_store_and_privacy_links(docs):
     for rel in PAGES.values():
         hrefs = [a.get("href", "") for t, a in docs[rel].tags if t == "a"]
         assert PRIVACY_URL in hrefs or rel == "404.html", f"{rel}: privacy link missing"
+
+
+def test_curious_minds_is_live_on_google_play(docs):
+    """Curious Minds launched on Google Play (Nov 2026)."""
+    cm = docs["curious-minds/index.html"]
+    badge = cm.find("a", href=PLAY_CM)
+    assert badge, "Curious Minds page needs a working Google Play badge"
+    assert all("noopener" in a.get("rel", "") for a in badge)
+    for rel in ("index.html", "curious-minds/index.html"):
+        assert "Coming soon to" not in read(rel), f"{rel}: still says Curious Minds is coming soon"
+    home_cm_card = re.search(r"Curious Minds · Science.*?</div></div>", read("index.html"), re.S).group(0)
+    assert "Available on Google Play" in home_cm_card, "home page app card should say it's on Google Play"
+
+
+def test_curious_minds_age_range_matches_play_listing():
+    """Play Store listing says ages 5 to 14."""
+    assert not re.search(r"5(&ndash;|–|-)15", read("curious-minds/index.html")), \
+        "Curious Minds page should say ages 5–14"
+    for rel in ("index.html", "parents/index.html"):   # age-guidance tables
+        row = re.search(r"<b>Curious Minds</b></span></td><td>([^<]*)</td>", read(rel))
+        assert row and row.group(1) == "5&ndash;14", f"{rel}: Curious Minds age row should be 5–14"
 
 
 # ---------------------------------------------------------------- security

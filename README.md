@@ -91,7 +91,6 @@ The first time someone submits a form, FormSubmit sends an activation email to t
 ## Still to add
 
 - Artwork and app screenshots for every image box
-- Curious Minds Google Play link (the button shows "Coming soon" for now)
 - Founder note and photo (section hidden until ready, see `our-story`)
 - Real parent testimonials (placeholders removed; never use invented ones)
 - Terms of Use and Responsible Use text
